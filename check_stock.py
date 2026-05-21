@@ -39,8 +39,6 @@ HEADERS = {
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
-      - name: Show current file
-        run: cat check_stock.py
 
 def get_stock_info():
     """Fetch Zara product details and return list of in-stock sizes."""
