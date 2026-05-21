@@ -1,0 +1,29 @@
+name: Zara Stock Monitor
+
+on:
+  schedule:
+    # Runs every 10 minutes (GitHub's minimum is 5 min, but 10 is kinder to their servers)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Also lets you trigger it manually from the GitHub UI
+
+jobs:
+  check-stock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run stock checker
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python check_stock.py
