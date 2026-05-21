@@ -21,7 +21,7 @@ DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
 API_URL = (
     "https://www.zara.com/us/en/product/"
-    "p04090033/details?sectionName=NEW_IN"
+    "4090033/details?sectionName=NEW_IN"
     f"&productColor[0]={TARGET_COLOR_ID}"
 )
 
