@@ -31,9 +31,9 @@ def get_stock_info():
     """Fetch Zara availability data."""
 
     availability_url = (
-        "https://www.zara.com/us/en/product/"
-        "531603913/availability"
-    )
+    "https://www.zara.com/itxrest/1/catalog/store/11719/"
+    "product/id/531603913/availability"
+)
 
     resp = requests.get(
         availability_url,
