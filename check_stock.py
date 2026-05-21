@@ -10,7 +10,7 @@ PRODUCT_NAME = "Zara Regular Fit Henley Shirt"
 
 # Leave empty for now
 # Later we can filter Medium specifically
-TARGET_SKUS = []
+TARGET_SKUS = ["531591817"]
 
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
