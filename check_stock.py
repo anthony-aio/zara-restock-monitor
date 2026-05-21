@@ -8,22 +8,11 @@ PRODUCT_URL = "https://www.zara.com/us/en/regular-fit-henley-shirt-p04090033.htm
 
 PRODUCT_NAME = "Zara Regular Fit Henley Shirt"
 
-TARGET_COLOR_ID = "2718839"
-
-# Leave empty [] for ANY size
-# Replace later with Medium size ID once logs show it
-# Example:
-# TARGET_SIZE_IDS = ["5188"]
-
-TARGET_SIZE_IDS = []
+# Leave empty for now
+# Later we can filter Medium specifically
+TARGET_SKUS = []
 
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
-
-API_URL = (
-    "https://www.zara.com/us/en/product/"
-    "4090033/details?sectionName=NEW_IN"
-    f"&productColor[0]={TARGET_COLOR_ID}"
-)
 
 HEADERS = {
     "User-Agent": (
@@ -38,76 +27,52 @@ HEADERS = {
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
-
 def get_stock_info():
-    """Fetch Zara product details and return list of in-stock sizes."""
+    """Fetch Zara availability data."""
 
-    resp = requests.get(API_URL, headers=HEADERS, timeout=20)
+    availability_url = (
+        "https://www.zara.com/us/en/product/"
+        "531603913/availability"
+    )
+
+    resp = requests.get(
+        availability_url,
+        headers=HEADERS,
+        timeout=20
+    )
 
     print("Status code:", resp.status_code)
-    print("Response preview:", resp.text[:500])
+
+    print("Response preview:", resp.text[:1000])
 
     if resp.status_code != 200:
         raise ValueError(
-            f"Zara API request failed with status {resp.status_code}"
+            f"Availability request failed: {resp.status_code}"
         )
 
     data = resp.json()
 
-    return parse_stock_from_json(data)
-
-
-def parse_stock_from_json(data):
-    """Parse Zara API JSON response for stock."""
-
     in_stock = []
 
-    try:
-        colors = data.get("product", {}).get("detail", {}).get("colors", [])
+    for item in data.get("skusAvailability", []):
 
-        for color in colors:
+        sku = str(item.get("sku"))
 
-            color_id = str(color.get("id", ""))
+        availability = item.get("availability", "")
 
-            if TARGET_COLOR_ID and color_id != TARGET_COLOR_ID:
-                continue
+        print(
+            f"SKU: {sku} | "
+            f"AVAILABILITY: {availability}"
+        )
 
-            color_name = color.get("name", "Unknown Color")
+        if availability == "in_stock":
 
-            sizes = color.get("sizes", [])
+            if not TARGET_SKUS or sku in TARGET_SKUS:
 
-            for size in sizes:
-
-                availability = size.get("availability", "")
-
-                size_name = size.get("name", "")
-
-                size_id = str(size.get("id", ""))
-
-                # PRINT SIZE IDS
-                print(
-                    f"SIZE NAME: {size_name} | "
-                    f"SIZE ID: {size_id} | "
-                    f"AVAILABILITY: {availability}"
-                )
-
-                if availability.lower() in (
-                    "in_stock",
-                    "available"
-                ):
-
-                    if (
-                        not TARGET_SIZE_IDS
-                        or size_id in TARGET_SIZE_IDS
-                    ):
-
-                        in_stock.append({
-                            "color": color_name,
-                            "size": size_name,
-                        })
-
-    except Exception as e:
-        print(f"JSON parse error: {e}")
+                in_stock.append({
+                    "color": "Selected Color",
+                    "size": f"SKU {sku}"
+                })
 
     return in_stock
 
@@ -147,9 +112,11 @@ def send_discord_alert(in_stock_sizes):
     )
 
     if r.status_code in (200, 204):
+
         print("✅ Discord alert sent!")
 
     else:
+
         print(
             f"❌ Discord webhook failed: "
             f"{r.status_code} {r.text}"
@@ -165,22 +132,27 @@ def main():
     print(f"URL: {PRODUCT_URL}")
 
     try:
+
         in_stock = get_stock_info()
 
     except Exception as e:
+
         print(f"ERROR fetching stock info: {e}")
+
         sys.exit(1)
 
     if in_stock:
 
         print(
             f"✅ IN STOCK! "
-            f"Found {len(in_stock)} size(s): {in_stock}"
+            f"Found {len(in_stock)} matching SKU(s): "
+            f"{in_stock}"
         )
 
         send_discord_alert(in_stock)
 
     else:
+
         print("❌ Out of stock. No alert sent.")
 
 
